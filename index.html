@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JART OFICIAL — Iniciar sesión</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="center-body">
+
+  <!-- LOGIN -->
+  <div class="card login-card" id="loginCard">
+    <img src="img/logo-jart.png" class="logo-large" alt="Logo JART">
+    <h1>JART OFICIAL</h1>
+    <p class="muted">Galería de arte</p>
+
+    <input id="email" type="email" placeholder="Correo electrónico" />
+    <input id="password" type="password" placeholder="Contraseña" />
+
+    <div class="row">
+      <button id="btnLogin" class="btn">Iniciar sesión</button>
+      <button id="btnShowRegister" class="btn outline">Crear cuenta</button>
+    </div>
+
+    <a href="#" id="forgotLink" class="link">¿Olvidaste tu contraseña?</a>
+    <p id="msg" class="msg"></p>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="card login-card hidden" id="registerCard">
+    <img src="img/logo-jart.png" class="logo-small" alt="Logo">
+    <h2>Crear cuenta</h2>
+    <input id="r_email" type="email" placeholder="Correo electrónico" />
+    <input id="r_password" type="password" placeholder="Contraseña" />
+    <div class="row">
+      <button id="btnRegister" class="btn">Registrar</button>
+      <button id="btnBackLogin" class="btn outline">Volver</button>
+    </div>
+    <p id="r_msg" class="msg"></p>
+  </div>
+
+  <!-- RECUPERAR CONTRASEÑA -->
+  <div class="card login-card hidden" id="resetCard">
+    <h2>Recuperar contraseña</h2>
+    <input id="reset_email" type="email" placeholder="Correo registrado" />
+    <div class="row">
+      <button id="btnReset" class="btn">Enviar enlace</button>
+      <button id="btnBackLogin2" class="btn outline">Volver</button>
+    </div>
+    <p id="reset_msg" class="msg"></p>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  sendPasswordResetEmail, signOut
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDEx1tsIW5ai7G3FdzNXVOCY7zAXC0_-Ik",
+  authDomain: "jart-oficial-8469e.firebaseapp.com",
+  projectId: "jart-oficial-8469e",
+  storageBucket: "jart-oficial-8469e.firebasestorage.app",
+  messagingSenderId: "699508762249",
+  appId: "1:699508762249:web:606df9c3c771c9353c4858"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const adminEmail = "jartoficialcr@gmail.com";
+
+// Mostrar / ocultar vistas
+const loginCard = document.getElementById("loginCard");
+const registerCard = document.getElementById("registerCard");
+const resetCard = document.getElementById("resetCard");
+
+document.getElementById("btnShowRegister").onclick = () => {
+  loginCard.classList.add("hidden");
+  registerCard.classList.remove("hidden");
+};
+document.getElementById("btnBackLogin").onclick = () => {
+  registerCard.classList.add("hidden");
+  loginCard.classList.remove("hidden");
+};
+document.getElementById("btnBackLogin2").onclick = () => {
+  resetCard.classList.add("hidden");
+  loginCard.classList.remove("hidden");
+};
+document.getElementById("forgotLink").onclick = (e) => {
+  e.preventDefault();
+  loginCard.classList.add("hidden");
+  resetCard.classList.remove("hidden");
+};
+
+// REGISTRAR
+document.getElementById("btnRegister").addEventListener("click", async () => {
+  const email = document.getElementById("r_email").value.trim();
+  const pass = document.getElementById("r_password").value.trim();
+  const r_msg = document.getElementById("r_msg");
+  r_msg.textContent = "";
+  if (!email || !pass) { r_msg.textContent = "Completa los campos."; return; }
+  try {
+    await createUserWithEmailAndPassword(auth, email, pass);
+    r_msg.textContent = "Cuenta creada. Puedes iniciar sesión.";
+    setTimeout(()=>{ registerCard.classList.add("hidden"); loginCard.classList.remove("hidden"); },1200);
+  } catch (err) { r_msg.textContent = err.message; }
+});
+
+// LOGIN
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+  if (!email || !pass) { msg.textContent = "Ingresa correo y contraseña."; return; }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    msg.textContent = "Acceso correcto. Redirigiendo...";
+    if (cred.user.email === adminEmail) window.location.href = "admin.html";
+    else window.location.href = "home.html";
+  } catch (err) {
+    if (err.code === "auth/user-not-found") msg.textContent = "Correo no registrado.";
+    else if (err.code === "auth/wrong-password") msg.textContent = "Contraseña incorrecta.";
+    else msg.textContent = err.message;
+  }
+});
+
+// RESTABLECER CONTRASEÑA
+document.getElementById("btnReset").addEventListener("click", async () => {
+  const email = document.getElementById("reset_email").value.trim();
+  const reset_msg = document.getElementById("reset_msg");
+  reset_msg.textContent = "";
+  if (!email) { reset_msg.textContent = "Ingresa el correo."; return; }
+  try { await sendPasswordResetEmail(auth, email);
+    reset_msg.textContent = "Enviado. Revisa tu correo.";
+  } catch (err) { reset_msg.textContent = err.message; }
+});
+
+signOut(auth).catch(()=>{});
+</script>
+</body>
+</html>
